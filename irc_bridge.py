@@ -177,18 +177,21 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
     def update_irc(self):
         if hasattr(self.ircbot, "msg"):
             while not self.hipchat_to_irc_queue.empty():
-                m = self.hipchat_to_irc_queue.get()
-                self.ircbot.msg(m['channel'], "<test> got m from queue %s" % str(m))
-                self.ircbot.msg(m['channel'], "<test> got m.keys from queue %s" % str(m.keys()))
+                try:
+                    m = self.hipchat_to_irc_queue.get()
+                    self.ircbot.msg(m['channel'], "<test> got m.keys from queue %s" % str(m.keys()))
+                    self.ircbot.msg(m['channel'], "<test> got m from queue %s" % str(m))
                 # light touch html sanitisation for Confluence messages
                 # make this more generic in future as it's a hack
-                if m["user"] == "Confluence":
-                    soup = BeautifulSoup.BeautifulSoup(m["message"])
-                    message = " ".join(soup.getText(" ").split(" ")[2:])
-                else:
-                    message = m["message"]
-                self.ircbot.msg(m['channel'], "<test> relaying %s" % message.encode('utf-8'))
-                self.ircbot.msg(m["channel"], "<%s> %s" % (m["user"], message.encode('utf-8')))
+                    if m["user"] == "Confluence":
+                        soup = BeautifulSoup.BeautifulSoup(m["message"])
+                        message = " ".join(soup.getText(" ").split(" ")[2:])
+                    else:
+                        message = m["message"]
+                    self.ircbot.msg(m['channel'], "<test> relaying %s" % message.encode('utf-8'))
+                    self.ircbot.msg(m["channel"], "<%s> %s" % (m["user"], message.encode('utf-8')))
+                except Exception as e:
+                    self.ircbot.msg(m['channel'], "<test> Hit an exception: %s" % str(e))
         else:
             print "Not connected yet"
 
