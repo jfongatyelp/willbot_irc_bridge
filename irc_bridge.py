@@ -178,6 +178,7 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
         if hasattr(self.ircbot, "msg"):
             while not self.hipchat_to_irc_queue.empty():
                 m = self.hipchat_to_irc_queue.get()
+                print "got m from queue %s" % str(m)
                 # light touch html sanitisation for Confluence messages
                 # make this more generic in future as it's a hack
                 if m["user"] == "Confluence":
