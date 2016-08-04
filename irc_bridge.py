@@ -17,7 +17,7 @@ from twisted.words.protocols import irc
 # Queues for IRC<->HC
 irc_to_hipchat_queue = Queue()
 hipchat_to_irc_queue = Queue()
-irc_bridge_verbose = False
+irc_bridge_verbose = True
 
 class IrcBridgePlugin(WillPlugin):
     def __init__(self):
@@ -63,7 +63,7 @@ class IrcBridgePlugin(WillPlugin):
     # This is where we grab hipchat messages and put them in a queue to head to IRC
     @require_settings("IRC_BRIDGE_IRC_SERVER",
                       "IRC_BRIDGE_IRC_PORT")
-    @hear("^.*", multiline=True)
+    @hear(".*", multiline=True)
     def send_to_irc(self, message):
         global hipchat_to_irc_queue
 
@@ -78,6 +78,8 @@ class IrcBridgePlugin(WillPlugin):
                     print "Couldn't work out who sent message, giving up"
                     return
 
+            if irc_bridge_verbose:
+                self.say("put a message to the queue: %s" % message['body'].encode('utf-8'))
             hipchat_to_irc_queue.put({"channel": "#%s" % message.room.name.encode('utf-8'), "user": sender.encode('utf-8'), "message": message["body"].encode('utf-8')})
 
             if irc_bridge_verbose:
@@ -191,7 +193,9 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
                     self.ircbot.msg(m['channel'], "<test> relaying %s" % message.encode('utf-8'))
                     self.ircbot.msg(m["channel"], "<%s> %s" % (m["user"], message.encode('utf-8')))
                 except Exception as e:
-                    self.ircbot.msg(m['channel'], "<test> Hit an exception: %s" % str(e))
+                    self.send_room_message(m['channel'], "Hit an exception: %s" % str(e))
+                    self.ircbot.msg(m['channel'], "<test> Hit an exception:")
+                    self.ircbot.msg(m['channel'], "<test> Hit an exception:")
         else:
             print "Not connected yet"
 
@@ -205,7 +209,7 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
         todo = {}
         while not self.irc_to_hipchat_queue.empty():
             m = self.irc_to_hipchat_queue.get()
-            try:    
+            try:
                 todo[m["channel"]].append((m["user"], m["message"]))
             except KeyError:
                 todo[m["channel"]] = [(m["user"], m["message"])]
@@ -219,7 +223,6 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
 
         # schedule ourselves for another run
         reactor.callLater(self.update_interval, self.update_hipchat)
-        
 
     def run(self):
         # set up our update loop with a small delay for connecting
