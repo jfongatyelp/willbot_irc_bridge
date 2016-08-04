@@ -185,6 +185,7 @@ class IrcHipchatBridge(protocol.ClientFactory, HipChatMixin):
                     message = " ".join(soup.getText(" ").split(" ")[2:])
                 else:
                     message = m["message"]
+                print "Relaying %s" %  message.encode('utf-8')
                 self.ircbot.msg(m["channel"], "<%s> %s" % (m["user"], message.encode('utf-8')))
         else:
             print "Not connected yet"
