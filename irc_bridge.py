@@ -63,7 +63,7 @@ class IrcBridgePlugin(WillPlugin):
     # This is where we grab hipchat messages and put them in a queue to head to IRC
     @require_settings("IRC_BRIDGE_IRC_SERVER",
                       "IRC_BRIDGE_IRC_PORT")
-    @hear("^.*$", multiline=True)
+    @hear("^.*", multiline=True)
     def send_to_irc(self, message):
         global hipchat_to_irc_queue
 
